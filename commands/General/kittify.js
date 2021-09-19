@@ -1,19 +1,23 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
+const { createErrorEmbed, createSuccessEmbed } = require("../../util/embeds");
+
+// env variables setup
+require("dotenv").config();
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("kittify")
-    .setDescription(
-      "Kittifies your text! Credit goes to Dan O Landy (http://kittify.herokuapp.com/#)."
-    )
+    .setDescription("Input the text you want to kittify!")
     .addStringOption((option) =>
       option
         .setName("text")
-        .setDescription("The text you want to kittify!")
+        .setDescription("Input the text you want to kittify!")
         .setRequired(true)
     ),
-  async execute(interaction) {
+  async execute(client, interaction) {
+    await interaction.deferReply();
     let text = interaction.options.getString("text");
+
     const kitty_dict = {
       ver: "fur",
       fer: "fur",
@@ -107,11 +111,16 @@ module.exports = {
       Thanks: "Back Scratches",
     };
 
-    const re = new RegExp(Object.keys(kitty_dict).join("|"), "gi");
-    text = text.replace(re, function (matched) {
-      return kitty_dict[matched];
-    });
-
-    await interaction.reply(text);
+    try {
+      const re = new RegExp(Object.keys(kitty_dict).join("|"), "gi");
+      text = text.replace(re, function (matched) {
+        return kitty_dict[matched];
+      });
+      interaction.editReply(text);
+    } catch (e) {
+      interaction.editReply({
+        embeds: [createErrorEmbed().setDescription(e.message)],
+      });
+    }
   },
 };
